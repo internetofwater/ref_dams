@@ -1,0 +1,7 @@
+.Rproj.user
+.DS_Store
+data
+temp
+.drake
+out
+.Rhistory
