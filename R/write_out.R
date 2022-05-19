@@ -28,7 +28,7 @@ convert_provider_id <- function(registry, providers) {
     left_join(select(providers, prov_id = id, provider), 
               by = "prov_id") %>%
     mutate(identifier = paste0(provider, provider_id)) %>%
-    mutate(uri = paste0("https://geoconnex.us/ref/gages/", id)) %>%
+    mutate(uri = paste0("https://geoconnex.us/ref/dams/", id)) %>%
     select(-prov_id)
 }
 
