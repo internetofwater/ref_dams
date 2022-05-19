@@ -7,7 +7,7 @@ write_reference <- function(dam_locations, registry, providers, reference_file, 
     select(id, uri, name, description, subjectOf, 
            provider, provider_id, nhdpv2_COMID) %>%
     mutate(id = as.integer(id),
-           nhdpv2_COMID = paste0("https://geoconnex.us//nhdplusv2/comid/", nhdpv2_COMID))
+           nhdpv2_COMID = paste0("https://geoconnex.us/nhdplusv2/comid/", nhdpv2_COMID))
   
   write_sf(out, reference_file)
   
