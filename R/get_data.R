@@ -22,3 +22,11 @@ get_dam_data <- function(out_dir, sb, f) {
   
 }
 
+get_nid_data <- function(out_file = "data/nation.gpkg", 
+                         url = "https://nid.usace.army.mil/api/nation/gpkg") {
+  
+  download.file(url, out_file, mode = "wb")
+  
+  sf::read_sf(out_file)
+  
+}

@@ -1,15 +1,14 @@
-get_dam_locations <- function(nid) {
+get_dam_locations <- function(dams, nid) {
   
   acre_to_sqkm <- 0.00404686
   
-  dams<- nid %>%
+  dams <- dams %>%
     select(NIDID, comid = FlowLcomid, J_DAM_DAcr) %>%
     group_by(NIDID) %>% arrange(J_DAM_DAcr) %>%
     filter(n() == 1) %>% ungroup() %>%
     mutate(name =paste0("National Inventory of Dams: ", NIDID),
            description = paste0("Reference feature for USACE National Inventory of Dams: ", NIDID),
            subjectOf = paste0(NIDID),
-           uri = paste0("https://geoconnex.us/ref/dams/", n()),
            provider = "https://nid.usace.army.mil",
            provider_id = NIDID,
            drainage_area_sqkm = (as.numeric(J_DAM_DAcr) * acre_to_sqkm)) %>%
@@ -20,6 +19,40 @@ get_dam_locations <- function(nid) {
            provider_id,
            drainage_area_sqkm,
            nhdpv2_COMID = comid)
+  
+  dams <- left_join(dams, 
+                    dplyr::rename(sf::st_drop_geometry(nid), 
+                                  nid_name = name),
+                                  by = c("provider_id" = "federalId"))
+  
+  dams <- mutate(dams, 
+                 name = ifelse(!is.na(nid_name), nid_name, name),
+                 subjectOf = ifelse(!is.na(id),
+                                    paste0("https://nid.usace.army.mil/#/dams/system/", 
+                                           id, "/summary"),
+                                    subjectOf)) %>%
+    select(-id, -nid_name)
+  
+  nid <- filter(nid, !federalId %in% dams$provider_id) %>%
+    mutate(description = paste0("Reference feature for USACE National Inventory of Dams: ", federalId),
+           subjectOf = paste0("https://nid.usace.army.mil/#/dams/system/", 
+                              id, "/summary"),
+           provider = "https://nid.usace.army.mil",
+           provider_id = federalId,
+           drainage_area_sqkm = NA_real_,
+           nhdpv2_COMID = NA_real_) %>%
+    sf::st_transform(sf::st_crs(dams)) %>%
+    select(name,
+           description,
+           subjectOf,
+           provider,
+           provider_id,
+           drainage_area_sqkm,
+           nhdpv2_COMID)
+  
+  nid <- nhdplusTools::st_compatibalize(nid, dams)
+  
+  bind_rows(dams, nid)
   
 }
 

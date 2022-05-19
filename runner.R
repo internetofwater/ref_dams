@@ -28,15 +28,18 @@ plan <- drake_plan(
                              COMID, REACHCODE, ToMeas, FromMeas),
   
   
-  nid = get_dam_data("data/dams/", 
+  dams = get_dam_data("data/dams/", 
                      sb = "5fb7e483d34eb413d5e14873",
                      f = "Final_NID_2018.zip"),
+  
+  nid = get_nid_data("data/nation.gpkg",
+                      "https://nid.usace.army.mil/api/nation/gpkg"),
   
   vaa = get_vaa(atts = c("comid", "levelpathi"),
                 updated_network = TRUE),
 
   # this function filters and renames gage locations to a common table
-  dam_locations = get_dam_locations(nid),
+  dam_locations = get_dam_locations(dams, nid),
   
   # TODO: Add specific hydrologic locations
   # # This function takes a table of all NWIS and more in the future gage
