@@ -22,11 +22,23 @@ get_dam_data <- function(out_dir, sb, f) {
   
 }
 
-get_nid_data <- function(out_file = "data/nation.gpkg", 
+get_nid_gpkg <- function(out_file = "data/nation.gpkg", 
                          url = "https://nid.usace.army.mil/api/nation/gpkg") {
   
-  download.file(url, out_file, mode = "wb")
+  if(!file.exists(out_file)) {
+    download.file(url, out_file, mode = "wb")
+  }
   
   sf::read_sf(out_file)
   
 }
+
+get_nid_csv <- function(out_file = "data/nation.csv",
+                        url = "https://nid.usace.army.mil/api/nation/csv") {
+  if(!file.exists(out_file)) {
+    download.file(url, out_file, mode = "wb")
+  }
+  
+  readr::read_csv(out_file, skip = 1)
+}
+

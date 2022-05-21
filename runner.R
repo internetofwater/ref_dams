@@ -32,13 +32,21 @@ plan <- drake_plan(
                      sb = "5fb7e483d34eb413d5e14873",
                      f = "Final_NID_2018.zip"),
   
-  nid = get_nid_data("data/nation.gpkg",
+  nid_gpkg = get_nid_gpkg("data/nation.gpkg",
                       "https://nid.usace.army.mil/api/nation/gpkg"),
+  
+  nid_meta = get_nid_csv("data/nation.csv",
+                         "https://nid.usace.army.mil/api/nation/csv"),
+  
+  nid = left_join(nid_gpkg, nid_meta, by = c("federalId" = "Federal ID")),
   
   vaa = get_vaa(atts = c("comid", "levelpathi"),
                 updated_network = TRUE),
 
   # this function filters and renames gage locations to a common table
+  # there is a significant ammount of logic to prefer the older NAWQA-based QC 
+  # data source (dams) over the newer nid data source. See function internals
+  # for details.
   dam_locations = get_dam_locations(dams, nid),
   
   # TODO: Add specific hydrologic locations
