@@ -44,6 +44,9 @@ plan <- drake_plan(
                 updated_network = TRUE),
 
   # this function filters and renames gage locations to a common table
+  # there is a significant ammount of logic to prefer the older NAWQA-based QC 
+  # data source (dams) over the newer nid data source. See function internals
+  # for details.
   dam_locations = get_dam_locations(dams, nid),
   
   # TODO: Add specific hydrologic locations
