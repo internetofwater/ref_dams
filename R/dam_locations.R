@@ -138,8 +138,8 @@ get_dam_locations <- function(dams, nid) {
 
   bind_rows(nawqa, usace) %>%
     mutate(description = paste0("Reference feature for USACE National Inventory of Dams: ", provider_id),
-           subjectOf = ifelse(!is.na(id), paste0("https://nid.usace.army.mil/#/dams/system/", 
-                              id, "/summary"), NA),
+           subjectOf = ifelse(!is.na(id), paste0("https://nid.usace.army.mil/#/dams/system/",
+                                                 provider_id, "/summary"), NA),
            provider = "https://nid.usace.army.mil", 
            nhdpv2_COMID = ifelse(!is.na(nhdpv2_COMID), 
                   paste0("https://geoconnex.us/nhdplusv2/comid/", nhdpv2_COMID), NA),
