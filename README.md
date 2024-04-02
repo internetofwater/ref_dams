@@ -20,7 +20,7 @@ There are three types of resources in the architecture:
 In practice, these urls will look like: 
 1. `https://geoconnex.us/ref/dams/1000047` (which will redirect to 2)
 1. `https://reference.geoconnex.us/collections/dams/items/1000047` (which will provide information about the reference location, including a link to 3)
-1. `https://nid.usace.army.mil/#/dams/system/####/summary` (which is the USACE's site information for this particular reference location.)
+1. `https://nid.sec.usace.army.mil#/dams/system/####/summary` (which is the USACE's site information for this particular reference location.)
 
 It is important to maintain this separation because no one organization, other than a community organization set up to fulfill this role, can be expected to be both the community reference catalog and a provider of their own information.  
 

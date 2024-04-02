@@ -33,10 +33,10 @@ plan <- drake_plan(
                      f = "Final_NID_2018.zip"),
   
   nid_gpkg = get_nid_gpkg("data/nation.gpkg",
-                      "https://nid.usace.army.mil/api/nation/gpkg"),
+                      "https://nid.sec.usace.army.milapi/nation/gpkg"),
   
   nid_meta = get_nid_csv("data/nation.csv",
-                         "https://nid.usace.army.mil/api/nation/csv"),
+                         "https://nid.sec.usace.army.milapi/nation/csv"),
   
   nid = left_join(nid_gpkg, nid_meta, by = c("federalId" = "Federal ID")),
   
