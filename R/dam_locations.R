@@ -158,63 +158,71 @@ get_dam_locations <- function(dams, nid) {
            feature_data_source)
 }
 
-# TODO: work out precise hydrologic locations.
-get_hydrologic_locations <- function(dams, hydrologic_locations, nhdpv2_fline,
-                                     da_diff_thresh = 0.5, search_radius_m = 500,
-                                     max_matches_in_radius = 5) {
+#' get dam hydrolocations
+#' @param dams sf data.frame table of dams with best estimate of comid and drainage area
+#' @param nhdpv2_fline sf data.frame of flowlines to index to
+#' @param da_diff_thresh numeric between 0 an 1
+#' if the normalized difference between prior estimate 
+#' drainage area and the NHDPlusV2 modeled drainage area is greater than this, 
+#' the dam is not indexed to the network.
+#' @param search_radius_m numeric distance to search from dam location to flowline
+#' @param max_matches_in_radius maximum flowines to consider within search radius
+#' @description
+#' Given input with estimates of NHDPlusV2 comid and prior estimates of drainage area,
+#' this function attempts to figure out which dams should be indexed to the network
+#' vs which should be left associated to a comid because they drain a very small area
+#' vs which should be left un indexed because uncertainty is too high.
+#'
+get_dam_hydrolocations <- function(dams, nhdpv2_fline, vaa,
+                                   da_diff_thresh = 0.1, 
+                                   search_radius_m = 500,
+                                   max_matches_in_radius = 5) {
   
-  v2_area <- select(nhdplusTools::get_vaa(), 
-                    nhdpv2_COMID = comid, 
-                    nhdpv2_totdasqkm = totdasqkm)
+  dams$nhdpv2_COMID <- as.integer(gsub("https://geoconnex.us/nhdplusv2/comid/", "",
+                                       dams$nhdpv2_COMID))
   
-  all_gages$nhdpv2_REACHCODE <- NA
-  all_gages$nhdpv2_REACH_measure <- NA
-  all_gages$nhdpv2_COMID <- NA
+  dams$nhdpv2_REACHCODE <- NA
+  dams$nhdpv2_REACH_measure <- NA
   
-  for(hl in hydrologic_locations) {
+  dams$drainage_area_sqkm <- dams$drainage_area_sqkm_nawqa
+  dams$drainage_area_sqkm[is.na(dams$drainage_area_sqkm)] <- 
+    dams$drainage_area_sqkm_nid[is.na(dams$drainage_area_sqkm)]
+  
+  dams <- left_join(dams, select(sf::st_drop_geometry(nhdpv2_fline),
+                                 nhdpv2_COMID = COMID, drainage_area_sqkm_nhdpv2 = TotDASqKM),
+                    by = "nhdpv2_COMID")
+  
+  dams$drainage_area_sqkm[dams$drainage_area_sqkm == 0] <- NA
+  
+  # normalized difference in drainage area using NiD/NAWQA best estimate to normalize
+  # we can use this to evaluate whether what the COMID models is reasonable compared
+  # to what the NID and NAWQA has as an estimate.
+  dams$norm_diffda <- (dams$drainage_area_sqkm - dams$drainage_area_sqkm_nhdpv2) / 
+    dams$drainage_area_sqkm
+  
+  update_index <- is.na(dams$nhdpv2_REACH_measure) & !is.na(dams$nhdpv2_COMID) & 
+    (!is.na(dams$norm_diffda) & abs(dams$norm_diffda) < da_diff_thresh)
+  
+  if(any(update_index)) {
     
-    hl$locations <- hl$locations[hl$locations$provider_id %in% all_gages$provider_id, ]
+    linked_dams <- select(dams[update_index, ], provider_id, nhdpv2_COMID) %>%
+      left_join(select(sf::st_drop_geometry(nhdpv2_fline), COMID, REACHCODE, FromMeas), 
+                by = c("nhdpv2_COMID" = "COMID"))
     
-    provider_selector <- all_gages$provider %in% hl$provider
+    #TODO: could figure out a precise location here -- but not that critical.
+    dams$nhdpv2_REACHCODE[update_index] <- 
+      linked_dams$REACHCODE
+    dams$nhdpv2_REACH_measure[update_index] <- 
+      linked_dams$FromMeas
     
-    matcher <- match(hl$locations$provider_id,
-                     all_gages$provider_id[provider_selector]
-                     )
-    
-    all_gages$nhdpv2_REACHCODE[provider_selector][matcher] <- 
-      hl$locations$nhdpv2_REACHCODE
-    all_gages$nhdpv2_REACH_measure[provider_selector][matcher] <- 
-      hl$locations$nhdpv2_REACH_measure
-    all_gages$nhdpv2_COMID[provider_selector][matcher] <- 
-      hl$locations$nhdpv2_COMID
-    
-    # Some gages missing reachcode/measure but have COMID
-    update_index <- is.na(all_gages$nhdpv2_REACH_measure & !is.na(all_gages$nhdpv2_COMID))
-    
-    if(any(update_index)) {
-      linked_gages <- select(all_gages[update_index, ], provider_id, nhdpv2_COMID) %>%
-        left_join(select(sf::st_drop_geometry(nhdpv2_fline), COMID, FromMeas), 
-                  by = c("nhdpv2_COMID" = "COMID"))
-      
-      all_gages$nhdpv2_REACH_measure[update_index] <- 
-        linked_gages$FromMeas
-    }
   }
   
-  all_gages <- left_join(all_gages, v2_area, by = "nhdpv2_COMID")
+  # now look at everything where there is no prior COMID estimate
+  update_index <- which(is.na(dams$nhdpv2_COMID))
   
-  diff_da <- abs(all_gages$nhdpv2_totdasqkm -
-                   all_gages$drainage_area_sqkm) / 
-    all_gages$drainage_area_sqkm
+  no_location <- dams[update_index, ]
   
-  bad_da <- all_gages[!is.na(diff_da) & diff_da > da_diff_thresh, ]
-  
-  update_index <- which(is.na(all_gages$nhdpv2_COMID) | 
-                          all_gages$provider_id %in% bad_da$provider_id)
-  
-  no_location <- all_gages[update_index, ]
-  
-  no_location <- st_transform(no_location, 5070)
+  no_location <- sf::st_transform(no_location, 5070)
   
   new_hl <- nhdplusTools::get_flowline_index(nhdpv2_fline, 
                                              no_location, 
@@ -222,45 +230,51 @@ get_hydrologic_locations <- function(dams, hydrologic_locations, nhdpv2_fline,
                                                search_radius_m, "m"),
                                              max_matches = max_matches_in_radius)
   
-  
-  linked_gages <- st_drop_geometry(select(no_location, provider_id)) %>%
+  linked_dams <- sf::st_drop_geometry(select(no_location, provider_id)) %>%
     mutate(id = seq_len(nrow(.))) %>%
     left_join(new_hl, by = "id") %>%
-    left_join(select(st_drop_geometry(all_gages), 
+    left_join(select(sf::st_drop_geometry(dams), 
                      provider_id, drainage_area_sqkm), 
               by = "provider_id") %>%
-    left_join(v2_area, by = c("COMID" = "nhdpv2_COMID")) %>%
-    mutate(da_diff = abs(drainage_area_sqkm - nhdpv2_totdasqkm))
+    left_join(select(sf::st_drop_geometry(nhdpv2_fline),
+                     COMID, drainage_area_sqkm_nhdpv2 = TotDASqKM), 
+              by = "COMID") %>%
+    left_join(select(vaa, COMID = comid, hydroseq), by = "COMID") %>%
+    mutate(da_diff = abs(drainage_area_sqkm - drainage_area_sqkm_nhdpv2) / drainage_area_sqkm) %>%
+    filter(is.na(da_diff) | da_diff < da_diff_thresh)
   
-  linked_gages_dedup <- bind_rows(
-    linked_gages %>%
+  linked_dams_dedup <- bind_rows(
+    linked_dams %>%
       group_by(provider_id) %>%
       filter(is.na(da_diff)) %>%
       filter(offset == min(offset)) %>%
       ungroup(), 
-    linked_gages %>%
+    linked_dams %>%
       group_by(provider_id) %>%
       filter(!is.na(da_diff)) %>%
       filter(da_diff == min(da_diff)) %>%
       ungroup()) %>%
     group_by(provider_id) %>%
+    filter(hydroseq == min(hydroseq)) %>%
     filter(n() == 1) %>%
     ungroup()
   
-  linked_gages <- select(no_location, provider_id) %>%
+  linked_dams <- select(no_location, provider_id) %>%
     mutate(id = seq_len(nrow(.))) %>%
-    left_join(select(linked_gages_dedup, 
+    left_join(select(linked_dams_dedup, 
                      id, COMID, REACHCODE, REACH_meas), 
               by = "id")
   
-  all_gages$nhdpv2_REACHCODE[update_index] <- linked_gages$REACHCODE
-  all_gages$nhdpv2_REACH_measure[update_index] <- linked_gages$REACH_meas
-  all_gages$nhdpv2_COMID[update_index] <- linked_gages$COMID
+  dams$nhdpv2_REACHCODE[update_index] <- linked_dams$REACHCODE
+  dams$nhdpv2_REACH_measure[update_index] <- linked_dams$REACH_meas
+  dams$nhdpv2_COMID[update_index] <- linked_dams$COMID
   
-  all_gages
+  dams <- select(dams, -norm_diffda)
+  
+  dams
 }
 
-add_mainstems <- function(gage_hydrologic_locations, mainstems, vaa) {
+add_mainstems <- function(dam_hydrologic_locations, mainstems, vaa) {
   mainstems <- mainstems[,c("id", "uri"), drop = TRUE]
   mainstems$id <- as.integer(mainstems$id)
   vaa <- right_join(vaa, mainstems, by = c("levelpathi" = "id"))
@@ -269,6 +283,8 @@ add_mainstems <- function(gage_hydrologic_locations, mainstems, vaa) {
   
   names(vaa) <- c("comid", "mainstem_uri")
   
-  left_join(gage_hydrologic_locations, vaa, 
+  vaa <- vaa[!is.na(vaa$comid),]
+  
+  left_join(dam_hydrologic_locations, vaa, 
             by = c("nhdpv2_COMID" = "comid"))
 }
