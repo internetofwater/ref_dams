@@ -8,6 +8,31 @@ The base dataset that informs this work can be found at in the "Final_NID_2018.z
 
 These reference locations are intended to be a shared community resource that anyone can contribute to.
 
+# Workflow
+
+```mermaid
+graph LR
+  style Graph fill:#FFFFFF00,stroke:#000000;
+  subgraph Graph
+    direction LR
+    x45079be5e9dad71e(["nat_db"]):::none --> x0d37c0787182d513(["nhdpv2_fline"]):::none
+    x26c28590358ed1f6(["nid_gpkg"]):::none --> xde13d5897adf176a(["nid"]):::none
+    xa0ffbbb184c91736(["nid_meta"]):::none --> xde13d5897adf176a(["nid"]):::none
+    x5a093a06e6e82fb6(["dams"]):::none --> x367057a71281c312(["dam_locations"]):::none
+    xde13d5897adf176a(["nid"]):::none --> x367057a71281c312(["dam_locations"]):::none
+    x7b8f98c0b818a18a(["registry"]):::none --> x164a1fd6fa5b800d(["registry_out"]):::none
+    x367057a71281c312(["dam_locations"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
+    x2ed57357c0c06777(["providers"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
+    x7b8f98c0b818a18a(["registry"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
+    x0d37c0787182d513(["nhdpv2_fline"]):::none --> x6c59ac2b7db5bcf8(["nhdpv2_fline_proc"]):::none
+    x367057a71281c312(["dam_locations"]):::none --> x7b8f98c0b818a18a(["registry"]):::none
+    x2ed57357c0c06777(["providers"]):::none --> x7b8f98c0b818a18a(["registry"]):::none
+    x60fc93676537b647(["providers_csv"]):::none --> x2ed57357c0c06777(["providers"]):::none
+    x36d41497a1d9cc73(["vaa"]):::none --> x36d41497a1d9cc73(["vaa"]):::none
+  end
+  classDef none stroke:#000000,color:#ffffff,fill:#7500D1;
+```
+
 # Architecture
 
 This project exists in a linked data architecture that relies on Web uniform resource identifiers (URIs) for both digital and real world entities. 
@@ -20,7 +45,7 @@ There are three types of resources in the architecture:
 In practice, these urls will look like: 
 1. `https://geoconnex.us/ref/dams/1000047` (which will redirect to 2)
 1. `https://reference.geoconnex.us/collections/dams/items/1000047` (which will provide information about the reference location, including a link to 3)
-1. `https://nid.usace.army.mil/#/dams/system/####/summary` (which is the USACE's site information for this particular reference location.)
+1. `https://nid.sec.usace.army.mil#/dams/system/####/summary` (which is the USACE's site information for this particular reference location.)
 
 It is important to maintain this separation because no one organization, other than a community organization set up to fulfill this role, can be expected to be both the community reference catalog and a provider of their own information.  
 

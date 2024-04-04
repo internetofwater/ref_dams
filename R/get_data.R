@@ -23,7 +23,7 @@ get_dam_data <- function(out_dir, sb, f) {
 }
 
 get_nid_gpkg <- function(out_file = "data/nation.gpkg", 
-                         url = "https://nid.usace.army.mil/api/nation/gpkg") {
+                         url = "https://nid.sec.usace.army.milapi/nation/gpkg") {
   
   if(!file.exists(out_file)) {
     download.file(url, out_file, mode = "wb")
@@ -34,7 +34,7 @@ get_nid_gpkg <- function(out_file = "data/nation.gpkg",
 }
 
 get_nid_csv <- function(out_file = "data/nation.csv",
-                        url = "https://nid.usace.army.mil/api/nation/csv") {
+                        url = "https://nid.sec.usace.army.milapi/nation/csv") {
   if(!file.exists(out_file)) {
     download.file(url, out_file, mode = "wb")
   }

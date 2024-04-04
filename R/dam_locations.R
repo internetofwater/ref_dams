@@ -3,6 +3,9 @@ get_dam_locations <- function(dams, nid) {
   acre_to_sqkm <- 0.00404686
   sqmi_to_sqkm <- 2.58999
   
+  dams$NIDID <- trimws(dams$NIDID)
+  nid$federalId <- trimws(nid$federalId)
+  
   dams <- dams %>%
     group_by(NIDID) %>% arrange(J_DAM_DAcr) %>%
     filter(n() == 1) %>% ungroup() %>%
@@ -132,13 +135,13 @@ get_dam_locations <- function(dams, nid) {
     left_join(extra, by = "provider_id") %>%
     filter(!provider_id %in% nawqa$provider_id) %>%
     sf::st_transform(sf::st_crs(nawqa)) %>%
-    mutate(feature_data_source = "https://nid.usace.army.mil/#/downloads")
+    mutate(feature_data_source = "https://nid.sec.usace.army.mil#/downloads")
   
   usace <- st_compatibalize(usace, nawqa)
 
   bind_rows(nawqa, usace) %>%
     mutate(description = paste0("Reference feature for USACE National Inventory of Dams: ", provider_id),
-           subjectOf = ifelse(!is.na(id), paste0("https://nid.usace.army.mil/#/dams/system/",
+           subjectOf = ifelse(!is.na(id), paste0("https://nid.sec.usace.army.mil#/dams/system/",
                                                  provider_id, "/summary"), NA),
            provider = "https://nid.usace.army.mil", 
            nhdpv2_COMID = ifelse(!is.na(nhdpv2_COMID), 
