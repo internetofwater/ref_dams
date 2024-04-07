@@ -200,8 +200,11 @@ get_dam_hydrolocations <- function(dams, nhdpv2_fline, vaa,
   dams$norm_diffda <- (dams$drainage_area_sqkm - dams$drainage_area_sqkm_nhdpv2) / 
     dams$drainage_area_sqkm
   
+  # these are where we have a reasonable network-drainage area match
   update_index <- is.na(dams$nhdpv2_REACH_measure) & !is.na(dams$nhdpv2_COMID) & 
     (!is.na(dams$norm_diffda) & abs(dams$norm_diffda) < da_diff_thresh)
+  
+  dams$index_type <- rep(NA_character_, nrow(dams))
   
   if(any(update_index)) {
     
@@ -214,7 +217,16 @@ get_dam_hydrolocations <- function(dams, nhdpv2_fline, vaa,
       linked_dams$REACHCODE
     dams$nhdpv2_REACH_measure[update_index] <- 
       linked_dams$FromMeas
-    
+  
+    dams$index_type[update_index] <- "nawqa_on_network_da_match"  
+  }
+  
+  # these are where we don't have a network drainage area match but NAWQA assigned a COMID
+  update_index <- is.na(dams$nhdpv2_REACH_measure) & !is.na(dams$nhdpv2_COMID) & 
+    (!is.na(dams$norm_diffda) & abs(dams$norm_diffda) > da_diff_thresh)
+  
+  if(any(update_index)) {
+    dams$index_type[update_index] <- "nawqa_off_network_da_mismatch"
   }
   
   # now look at everything where there is no prior COMID estimate
@@ -248,12 +260,14 @@ get_dam_hydrolocations <- function(dams, nhdpv2_fline, vaa,
       group_by(provider_id) %>%
       filter(is.na(da_diff)) %>%
       filter(offset == min(offset)) %>%
-      ungroup(), 
+      ungroup() %>%
+      mutate(index_type = "automatic_network_closest_flowline_no_da_check"), 
     linked_dams %>%
       group_by(provider_id) %>%
       filter(!is.na(da_diff)) %>%
       filter(da_diff == min(da_diff)) %>%
-      ungroup()) %>%
+      ungroup() %>%
+      mutate(index_type = "automatic_network_closest_drainage_area")) %>%
     group_by(provider_id) %>%
     filter(hydroseq == min(hydroseq)) %>%
     filter(n() == 1) %>%
@@ -262,12 +276,14 @@ get_dam_hydrolocations <- function(dams, nhdpv2_fline, vaa,
   linked_dams <- select(no_location, provider_id) %>%
     mutate(id = seq_len(nrow(.))) %>%
     left_join(select(linked_dams_dedup, 
-                     id, COMID, REACHCODE, REACH_meas), 
+                     id, COMID, REACHCODE, REACH_meas, index_type, drainage_area_sqkm_nhdpv2), 
               by = "id")
   
   dams$nhdpv2_REACHCODE[update_index] <- linked_dams$REACHCODE
   dams$nhdpv2_REACH_measure[update_index] <- linked_dams$REACH_meas
   dams$nhdpv2_COMID[update_index] <- linked_dams$COMID
+  dams$index_type[update_index] <- linked_dams$index_type
+  dams$drainage_area_sqkm_nhdpv2[update_index] <- linked_dams$drainage_area_sqkm_nhdpv2
   
   dams <- select(dams, -norm_diffda)
   

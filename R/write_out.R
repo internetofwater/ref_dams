@@ -19,8 +19,8 @@ write_reference <- function(dam_locations, registry, providers, reference_file, 
     select(id, uri, name, description, subjectOf, 
            provider, provider_id, 
            nhdpv2_COMID, nhdpv2_REACHCODE, nhdpv2_REACH_measure,
-           drainage_area_sqkm, drainage_area_sqkm_nhdpv2, mainstem_uri,
-           feature_data_source) %>%
+           drainage_area_sqkm, drainage_area_sqkm_nhdpv2, index_type,
+           mainstem_uri, feature_data_source) %>%
     mutate(id = as.integer(id))
   
   write_sf(out, reference_file)
