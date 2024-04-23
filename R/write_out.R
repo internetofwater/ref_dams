@@ -5,8 +5,8 @@ write_reference <- function(dam_locations, registry, providers, reference_file, 
         if(is.na(x)) NA_character_ else paste0("https://geoconnex.us/nhdplusv2/comid/", x)
       }, FUN.VALUE = c(""))
   
-  if(all(!grepl("https", dam_locations$nhdpv2_REACHCODE))) {
-    dam_locations$nhdpv2_REACHCODE <-
+  if(all(is.na(dam_locations$nhdpv2_REACHCODE) | !grepl("https", dam_locations$nhdpv2_REACHCODE))) {
+    dam_locations$nhdpv2_REACHCODE_uri <-
       vapply(dam_locations$nhdpv2_REACHCODE, \(x) {
         if(is.na(x)) NA_character_ else paste0("https://geoconnex.us/nhdplusv2/reachcode/", x)
       }, FUN.VALUE = c(""))
@@ -18,7 +18,7 @@ write_reference <- function(dam_locations, registry, providers, reference_file, 
                      uri, identifier, id), by = "identifier") %>%
     select(id, uri, name, description, subjectOf, 
            provider, provider_id, 
-           nhdpv2_COMID, nhdpv2_REACHCODE, nhdpv2_REACH_measure,
+           nhdpv2_COMID, nhdpv2_REACHCODE_uri, nhdpv2_REACHCODE, nhdpv2_REACH_measure,
            drainage_area_sqkm, drainage_area_sqkm_nhdpv2, index_type,
            mainstem_uri, feature_data_source) %>%
     mutate(id = as.integer(id))
