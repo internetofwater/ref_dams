@@ -21,16 +21,21 @@ graph LR
     x5a093a06e6e82fb6(["dams"]):::none --> x367057a71281c312(["dam_locations"]):::none
     xde13d5897adf176a(["nid"]):::none --> x367057a71281c312(["dam_locations"]):::none
     x7b8f98c0b818a18a(["registry"]):::none --> x164a1fd6fa5b800d(["registry_out"]):::none
-    x367057a71281c312(["dam_locations"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
+    xe9d41804ff4ab7c0(["dam_hydrologic_locations_with_mainstems"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
     x2ed57357c0c06777(["providers"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
     x7b8f98c0b818a18a(["registry"]):::none --> x2dd2f719129b7fe6(["reference_out"]):::none
     x0d37c0787182d513(["nhdpv2_fline"]):::none --> x6c59ac2b7db5bcf8(["nhdpv2_fline_proc"]):::none
     x367057a71281c312(["dam_locations"]):::none --> x7b8f98c0b818a18a(["registry"]):::none
     x2ed57357c0c06777(["providers"]):::none --> x7b8f98c0b818a18a(["registry"]):::none
+    xf871d39e1e4f2234(["dam_hydrologic_locations"]):::none --> xe9d41804ff4ab7c0(["dam_hydrologic_locations_with_mainstems"]):::none
+    xaa2c6f0a5f97fbb7(["mainstems"]):::none --> xe9d41804ff4ab7c0(["dam_hydrologic_locations_with_mainstems"]):::none
+    x36d41497a1d9cc73(["vaa"]):::none --> xe9d41804ff4ab7c0(["dam_hydrologic_locations_with_mainstems"]):::none
+    x367057a71281c312(["dam_locations"]):::none --> xf871d39e1e4f2234(["dam_hydrologic_locations"]):::none
+    x6c59ac2b7db5bcf8(["nhdpv2_fline_proc"]):::none --> xf871d39e1e4f2234(["dam_hydrologic_locations"]):::none
+    x36d41497a1d9cc73(["vaa"]):::none --> xf871d39e1e4f2234(["dam_hydrologic_locations"]):::none
     x60fc93676537b647(["providers_csv"]):::none --> x2ed57357c0c06777(["providers"]):::none
-    x36d41497a1d9cc73(["vaa"]):::none --> x36d41497a1d9cc73(["vaa"]):::none
   end
-  classDef none stroke:#000000,color:#ffffff,fill:#7500D1;
+  classDef none stroke:#000000,color:#000000,fill:#94a4ac;
 ```
 
 # Architecture
